@@ -22,6 +22,8 @@ var users = require('./routes/users');
 
 var app = express();
 
+var servoState = [];
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
@@ -37,29 +39,45 @@ app.use(express.static(path.join(__dirname, 'public')));
 //app.use('/', routes);
 //app.use('/users', users);
 
-function setServo(servo, percent)
+function setServo(servo, val)
 {
-  if (servo < 1 || servo > 3) {
+  if (typeof(servo) !== 'number') {
     return;
-  } else if (percent < 0 || percent > 100) {
+  } else if (typeof(val) !== 'number') {
     return;
   }
-  exec('echo '+servo+'='+percent+'% > /dev/servoblaster',
+  exec('echo '+servo+'='+val+' > /dev/servoblaster',
   function (error, stdout, stderr) {
-    console.log("set servo: ", servo, " -> ", percent);
+    console.log("set servo: ", servo, " -> ", val);
   });
 }
 
-setServo(1, 50);
-setServo(2, 50);
-setServo(3, 50);
+setServo(1, 150);
+setServo(3, 150);
+setServo(4, 150);
 
 app.get('/', function(req, res, next) {
-  res.sendFile(path.join(__dirname, 'public/index.html'));
+  res.sendFile(path.join(__dirname, 'public/digits.html'));
 });
 
 app.get('/cmd', function(req, res, next) {
-  //
+  if (!req.query.cmd) {
+    console.log("no command");
+    return;
+  }
+  if (req.query.cmd === 'set servo' &&
+  typeof(req.query.servo) === 'number' &&
+  typeof(req.query.val) === 'number') {
+    console.log("Setting servo "+req.query.servo+" to val "+req.query.val);
+    setServo(req.query.servo, req.query.val);
+    servoState[req.query.servo] = req.query.val;
+    res.json({ res: 1 });
+  } else if (req.query.cmd === 'get servo' && req.query.servo) {
+    console.log("Returning servo "+req.query.servo+" val "+req.query.val);
+    res.json({ res: servoState[req.query.servo] });
+  } else {
+    console.log("/cmd problem");
+  }
 });
 
 // catch 404 and forward to error handler
