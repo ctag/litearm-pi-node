@@ -68,7 +68,7 @@ app.get('/cmd', function(req, res, next) {
   }
   if (req.query.cmd === 'set servo') {
     console.log("Setting servo "+req.query.servo+" to val "+req.query.val);
-    setServo(req.query.servo, req.query.val);
+    setServo(ParseInt(req.query.servo), ParseInt(req.query.val));
     res.json({ res: 1 });
   } else if (req.query.cmd === 'get servo' && req.query.servo) {
     console.log("Returning servo "+req.query.servo+" val "+servoState[req.query.servo]);
