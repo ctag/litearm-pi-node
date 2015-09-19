@@ -1,0 +1,15 @@
+[Unit]
+Description=PiBits ServoBlaster Daemon
+#After=graphical.target
+
+[Service]
+Type=forking
+#EnvironmentFile=/etc/courtlistener
+#WorkingDirectory=/usr/local/solr/example
+#ExecStart=/usr/local/sbin/servod --idle-timeout=300000
+ExecStart=/usr/local/sbin/servod
+Restart=on-failure
+#LimitNOFILE=10000
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,18 @@
+[Service]
+ExecStart=/home/berocs/litearm-pi-node/start.sh
+## Example
+#ExecStart=/usr/bin/node app.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=node-webserver
+User=berocs
+Group=berocs
+## Could also be :
+#User=nginx
+#Group=nginx
+Environment=NODE_ENV=production
+WorkingDirectory=/home/berocs/litearm-pi-node/
+
+[Install]
+WantedBy=multi-user.target
