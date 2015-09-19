@@ -73,7 +73,7 @@ app.get('/cmd', function(req, res, next) {
     setServo(req.query.servo, req.query.val);
     res.json({ res: 1 });
   } else if (req.query.cmd === 'get servo' && req.query.servo) {
-    console.log("Returning servo "+req.query.servo+" val "+req.query.val);
+    console.log("Returning servo "+req.query.servo+" val "+servoState[req.query.servo]);
     res.json({ res: servoState[req.query.servo] });
   } else {
     console.log("/cmd problem");

@@ -95,84 +95,29 @@
       "servo": 1
     }, "json",
     function (result) {
-      updateBase(result);
+      updateBase(result.res);
       httpDo("/cmd", "GET", {
         "cmd": "get servo",
         "servo": 4
       }, "json",
       function (result) {
-        updateShdr(result);
+        updateShdr(result.res);
         httpDo("/cmd", "GET", {
           "cmd": "get servo",
           "servo": 3
-        }, "json", updateElbo);
+        }, "json",
+        function (result) {
+          updateElbo(result.res);
+        });
       });
     });
   }
 
   //setInterval(doUpdateAll, 3000);
   </script>
-
-  <script>
-    /* Copyright (C) 2007 Richard Atterer, richardÂ©atterer.net
-       This program is free software; you can redistribute it and/or modify it
-       under the terms of the GNU General Public License, version 2. See the file
-       COPYING for details. */
-
-    var imageNr = 0; // Serial number of current image
-    var finished = new Array(); // References to img objects which have finished downloading
-    var paused = false;
-    var timePrev = [];
-    timePrev.length = 10;
-    for (var index = 0; index < timePrev.length; index++) {
-      timePrev[index] = Date.now();
-    }
-    console.log(timePrev);
-
-    function createImageLayer() {
-      var img = new Image();
-      img.style.position = "absolute";
-      img.style.left = "0px";
-      img.style.top = "0px";
-      img.style.zIndex = -10;
-      img.onload = imageOnload;
-      //img.onclick = imageOnclick;
-      // if (imageNr >= 100) {
-      //   imageNr = 1;
-      // }
-      img.src = "http://bns-daedalus.berocs.com:8080/?action=snapshot&n=" + (++imageNr);
-      document.getElementById("streamFrame").innerHTML = "Frame # " + imageNr;
-      document.getElementById("streamFPS").innerHTML = "FPS: " + (10/(Date.now() - timePrev.shift()))*1000;
-      timePrev.push(Date.now());
-      webcam.insertBefore(img, webcam.firstChild);
-    }
-
-    // Two layers are always present (except at the very beginning), to avoid flicker
-    function imageOnload() {
-      this.style.zIndex = -9; // Image finished, bring to front!
-      while (1 < finished.length) {
-        var del = finished.shift(); // Delete old image(s) from document
-        del.parentNode.removeChild(del);
-      }
-      finished.push(this);
-      if (!paused) createImageLayer();
-    }
-
-    function setupWebcam() {
-      var webcam = document.getElementById("webcam");
-      var frameCountDiv = document.getElementById("streamFrame");
-      var frameFpsDiv = document.getElementById("streamFPS");
-      createImageLayer();
-    }
-
-    function imageOnclick() { // Clicking on the image will pause the stream
-      paused = !paused;
-      if (!paused) createImageLayer();
-    }
-  </script>
 </head>
 
-<body onload="setupWebcam();" style="background-color: #050505;
+<body style="background-color: #050505;
 width: 100%; height: 100%;">
 
 <style>
@@ -199,9 +144,6 @@ width: 100%; height: 100%;">
   z-index: 10; position: absolute; top: 10px; right: 10px;">
 
     <div id="updateControl" class="controlItem">Click to update all</div>
-    <div id="streamFrame" class="controlItem">Frame # -1</div>
-    <div id="streamFPS" class="controlItem">Stream FPS: -1</div>
-    <div id="fanControl" class="controlItem">Fan is NA</div>
 
     <div id="baseControl" class="controlItem">
       BASE Control:
