@@ -17,8 +17,8 @@ var StringDecoder = require('string_decoder').StringDecoder;
 var decoder = new StringDecoder('utf8');
 var fs = require('fs');
 
-var routes = require('./routes/index');
-var users = require('./routes/users');
+//var routes = require('./routes/index');
+//var users = require('./routes/users');
 
 var app = express();
 
@@ -49,6 +49,7 @@ function setServo(servo, val)
   exec('echo '+servo+'='+val+' > /dev/servoblaster',
   function (error, stdout, stderr) {
     console.log("set servo: ", servo, " -> ", val);
+    servoState[servo] = val;
   });
 }
 
@@ -70,7 +71,6 @@ app.get('/cmd', function(req, res, next) {
   typeof(req.query.val) === 'number') {
     console.log("Setting servo "+req.query.servo+" to val "+req.query.val);
     setServo(req.query.servo, req.query.val);
-    servoState[req.query.servo] = req.query.val;
     res.json({ res: 1 });
   } else if (req.query.cmd === 'get servo' && req.query.servo) {
     console.log("Returning servo "+req.query.servo+" val "+req.query.val);
