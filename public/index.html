@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html style="width: 100%; height: 100%;">
+<head>
+  <title>Cerealbot Control Panel</title>
+
+  <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.7/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.7/addons/p5.dom-min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/js/foundation.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/js/foundation/foundation.slider.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/css/foundation.min.css"></script>
+
+  <script type="text/javascript">
+    var text;
+
+    function setup() {
+      // make a new div and position it at 10, 10:
+      // text = createDiv("Sensor reading:");
+      // text.position(10, 10);
+      // text.style("z-index", 500);
+      // text.mouseClicked(toggleFan);
+      // make a HTTP call to the server for the data:
+      // var sensorReading = loadStrings("/getFan", showData);
+      doUpdateAll();
+    }
+
+    function draw() {
+    }
+
+  function updateFan(result) {
+    var fanControl = select('#fanControl');
+    console.log("updateFan result: ", result);
+    if (result == 0) {
+      fanControl.html("Fan is OFF");
+    } else {
+      fanControl.html("Fan is ON");
+    }
+  }
+
+  function updateBase(result) {
+    var baseSlider = select('#baseSlider');
+    console.log("updateBase result: ", result);
+    $('#baseSlider').foundation('slider', 'set_value', result);
+  }
+
+  function updateShdr(result) {
+    var baseSlider = select('#shdrSlider');
+    console.log("updateShdr result: ", result);
+    $('#shdrSlider').foundation('slider', 'set_value', result);
+  }
+
+  function updateElbo(result) {
+    var baseSlider = select('#ElboSlider');
+    console.log("updateElbo result: ", result);
+    $('#elboSlider').foundation('slider', 'set_value', result);
+  }
+
+  function doToggleFan() {
+    httpDo("/serialCmd", "GET", {
+      "cmd": "[sft]"
+    }, "json");
+  }
+
+  function doSetBase(degrees) {
+    if (degrees < 0) {
+      return;
+    }
+    var elboCmd = "[sb" + degrees + "]";
+    httpDo("/serialCmd", "GET", {
+      "cmd": elboCmd
+    }, "json");
+  }
+
+  function doSetShdr(degrees) {
+    if (degrees < 0) {
+      return;
+    }
+    var elboCmd = "[su" + degrees + "]";
+    httpDo("/serialCmd", "GET", {
+      "cmd": elboCmd
+    }, "json");
+  }
+
+  function doSetElbo(degrees) {
+    console.log(degrees, typeof(degrees));
+    if (degrees < 0) {
+      console.log("Ignoring bad elbo degrees.");
+      return;
+    } else {
+      var elboCmd = "[se" + degrees + "]";
+      httpDo("/serialCmd", "GET", {
+        "cmd": elboCmd
+      }, "json");
+    }
+  }
+
+  function doUpdateAll() {
+    console.log("Updating all controls.");
+    httpDo("/serialCmdResp", "GET", {
+      "cmd": "[gf]"
+    }, "json",
+    function (result) {
+      updateFan(result);
+      httpDo("/serialCmdResp", "GET", {
+        "cmd": "[gb]"
+      }, "json",
+      function (result) {
+        updateBase(result);
+        httpDo("/serialCmdResp", "GET", {
+          "cmd": "[gu]"
+        }, "json",
+        function (result) {
+          updateShdr(result);
+          httpDo("/serialCmdResp", "GET", {
+            "cmd": "[ge]"
+          }, "json", updateElbo);
+        });
+      });
+    });
+  }
+
+  //setInterval(doUpdateAll, 3000);
+  </script>
+
+  <script>
+    /* Copyright (C) 2007 Richard Atterer, richardÂ©atterer.net
+       This program is free software; you can redistribute it and/or modify it
+       under the terms of the GNU General Public License, version 2. See the file
+       COPYING for details. */
+
+    var imageNr = 0; // Serial number of current image
+    var finished = new Array(); // References to img objects which have finished downloading
+    var paused = false;
+    var timePrev = [];
+    timePrev.length = 10;
+    for (var index = 0; index < timePrev.length; index++) {
+      timePrev[index] = Date.now();
+    }
+    console.log(timePrev);
+
+    function createImageLayer() {
+      var img = new Image();
+      img.style.position = "absolute";
+      img.style.left = "0px";
+      img.style.top = "0px";
+      img.style.zIndex = -10;
+      img.onload = imageOnload;
+      //img.onclick = imageOnclick;
+      // if (imageNr >= 100) {
+      //   imageNr = 1;
+      // }
+      img.src = "http://bns-daedalus.berocs.com:8080/?action=snapshot&n=" + (++imageNr);
+      document.getElementById("streamFrame").innerHTML = "Frame # " + imageNr;
+      document.getElementById("streamFPS").innerHTML = "FPS: " + (10/(Date.now() - timePrev.shift()))*1000;
+      timePrev.push(Date.now());
+      webcam.insertBefore(img, webcam.firstChild);
+    }
+
+    // Two layers are always present (except at the very beginning), to avoid flicker
+    function imageOnload() {
+      this.style.zIndex = -9; // Image finished, bring to front!
+      while (1 < finished.length) {
+        var del = finished.shift(); // Delete old image(s) from document
+        del.parentNode.removeChild(del);
+      }
+      finished.push(this);
+      if (!paused) createImageLayer();
+    }
+
+    function setupWebcam() {
+      var webcam = document.getElementById("webcam");
+      var frameCountDiv = document.getElementById("streamFrame");
+      var frameFpsDiv = document.getElementById("streamFPS");
+      createImageLayer();
+    }
+
+    function imageOnclick() { // Clicking on the image will pause the stream
+      paused = !paused;
+      if (!paused) createImageLayer();
+    }
+  </script>
+</head>
+
+<body onload="setupWebcam();" style="background-color: #050505;
+width: 100%; height: 100%;">
+
+<style>
+.controlItem {
+  width: 95%;
+  border: 1px solid black;
+  display: inline-block;
+  color: #b9b9b9;
+  padding: 1%;
+  margin: 1%;
+}
+.controlButton {
+  width: 25%;
+  border: 1px solid black;
+  display: inline-block;
+  color: #b9b9b9;
+  padding: 1%;
+  margin: 1%;
+}
+</style>
+
+  <div id="webcam" style="position: relative; width: 70%;
+  top: 10px; left: 10px;">
+    <noscript>
+      <img src="http://bns-daedalus.berocs.com:8080/?action=snapshot" />
+    </noscript>
+  </div>
+
+  <div id="controlPanel" style="background-color: #252525;
+  width: 28%; height: 90%; border: 1px solid red;
+  z-index: 10; position: absolute; top: 10px; right: 10px;">
+
+    <div id="updateControl" class="controlItem">Click to update all</div>
+    <div id="streamFrame" class="controlItem">Frame # -1</div>
+    <div id="streamFPS" class="controlItem">Stream FPS: -1</div>
+    <div id="fanControl" class="controlItem">Fan is NA</div>
+
+    <div id="baseControl" class="controlItem">
+      BASE Control:
+      <br>
+      <div class="row">
+      <div class="small-10 medium-11 columns">
+        <div id="baseSlider" class="range-slider" data-slider
+        data-options="start: 1; end: 200; display_selector: #baseSliderOutput; initial: -1;">
+          <span class="range-slider-handle" role="slider" tabindex="0"></span>
+          <span class="range-slider-active-segment"></span>
+        </div>
+      </div>
+      <div class="small-2 medium-1 columns">
+        <span id="baseSliderOutput"></span>
+      </div>
+      </div>
+      <br>
+      <div id="stepBaseLower" class="controlButton">CW</div>
+      <div id="stepBaseHigher" class="controlButton">CCW</div>
+    </div> <!-- End baseControl -->
+
+    <div id="shdrControl" class="controlItem">
+      SHDR Control:
+      <br>
+      <div class="row">
+      <div class="small-10 medium-11 columns">
+        <div id="shdrSlider" class="range-slider" data-slider
+        data-options="start: 1; end: 140; display_selector: #shdrSliderOutput; initial: -1;">
+          <span class="range-slider-handle" role="slider" tabindex="0"></span>
+          <span class="range-slider-active-segment"></span>
+        </div>
+      </div>
+      <div class="small-2 medium-1 columns">
+        <span id="shdrSliderOutput"></span>
+      </div>
+      </div>
+      <br>
+      <div id="stepShdrLower" class="controlButton">Forward</div>
+      <div id="stepShdrHigher" class="controlButton">Back</div>
+    </div> <!-- end shdrControl -->
+
+    <div id="elboControl" class="controlItem">
+      ELBO Control:
+      <br>
+      <div class="row">
+      <div class="small-10 medium-11 columns">
+        <div id="elboSlider" class="range-slider" data-slider
+        data-options="start: 1; end: 140; display_selector: #elboSliderOutput; initial: -1;">
+          <span class="range-slider-handle" role="slider" tabindex="0"></span>
+          <span class="range-slider-active-segment"></span>
+        </div>
+      </div>
+      <div class="small-2 medium-1 columns">
+        <span id="elboSliderOutput"></span>
+      </div>
+      </div>
+      <br>
+      <div id="stepElboLower" class="controlButton">Up</div>
+      <div id="stepElboHigher" class="controlButton">Down</div>
+    </div><!-- end elboControl -->
+
+</div><!-- End controlPanel -->
+
+</body>
+</html>
+
+<script>
+  $(document).foundation('slider', 'reflow');
+
+  $('#streamFrame').click(function (event) {
+    imageOnclick();
+  });
+
+  $('#fanControl').click(function (event) {
+    doToggleFan();
+  });
+
+  // $('#baseSlider').click(function (event) {
+  //   console.log("CLICK slider: ", $('#baseSlider').attr('data-slider'));
+  // });
+
+  //$('#baseSlider').on('change.fndtn.slider', function() {
+  $('#baseSlider').click(function (event) {
+    console.log("CHANGE slider: ", $('#baseSlider').attr('data-slider'));
+    var degrees = parseInt($('#baseSlider').attr('data-slider'));
+    doSetBase(degrees);
+  });
+
+  $('#stepBaseLower').click(function (event) {
+    var degrees = parseInt($('#baseSlider').attr('data-slider'))-5;
+    doSetBase(degrees);
+    updateBase(degrees);
+  });
+
+  $('#stepBaseHigher').click(function (event) {
+    var degrees = parseInt($('#baseSlider').attr('data-slider'))+5;
+    doSetBase(degrees);
+    updateBase(degrees);
+  });
+
+  //$('#shdrSlider').on('change.fndtn.slider', function() {
+  $('#shdrSlider').click(function (event) {
+    console.log("SHDR CHANGE slider: ", $('#shdrSlider').attr('data-slider'));
+    doSetShdr(parseInt($('#shdrSlider').attr('data-slider')));
+  });
+
+  $('#stepShdrLower').click(function (event) {
+    var degrees = parseInt($('#shdrSlider').attr('data-slider'))-5;
+    doSetShdr(degrees);
+    updateShdr(degrees);
+  });
+
+  $('#stepShdrHigher').click(function (event) {
+    var degrees = parseInt($('#shdrSlider').attr('data-slider'))+5;
+    doSetShdr(degrees);
+    updateShdr(degrees);
+  });
+
+  //$('#elboSlider').on('change.fndtn.slider', function() {
+  $('#elboSlider').click(function (event) {
+    console.log("ELBO CHANGE slider: ", $('#elboSlider').attr('data-slider'));
+    var degrees = parseInt($('#elboSlider').attr('data-slider'));
+    doSetElbo(degrees);
+  });
+
+  $('#stepElboLower').click(function (event) {
+    var degrees = parseInt($('#elboSlider').attr('data-slider'))-5;
+    doSetElbo(degrees);
+    updateElbo(degrees);
+  });
+
+  $('#stepElboHigher').click(function (event) {
+    var degrees = parseInt($('#elboSlider').attr('data-slider'))+5;
+    doSetElbo(degrees);
+    updateElbo(degrees);
+  });
+
+  $('#updateControl').click(function (event) {
+    doUpdateAll();
+    //console.log($('#elboSlider').attr('data-options'));
+    //$('#elboSlider').attr('data-options',
+    //"start: 10; end: 120; display_selector: #elboSliderOutput; initial: -100;");
+  });
+</script>
