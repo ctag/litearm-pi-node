@@ -66,9 +66,7 @@ app.get('/cmd', function(req, res, next) {
     console.log("no command");
     return;
   }
-  if (req.query.cmd === 'set servo' &&
-  typeof(req.query.servo) === 'number' &&
-  typeof(req.query.val) === 'number') {
+  if (req.query.cmd === 'set servo') {
     console.log("Setting servo "+req.query.servo+" to val "+req.query.val);
     setServo(req.query.servo, req.query.val);
     res.json({ res: 1 });
@@ -77,6 +75,7 @@ app.get('/cmd', function(req, res, next) {
     res.json({ res: servoState[req.query.servo] });
   } else {
     console.log("/cmd problem");
+    res.json({ res: -1 });
   }
 });
 
