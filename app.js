@@ -41,11 +41,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 function setServo(servo, val)
 {
-  if (typeof(servo) !== 'number') {
-    return;
-  } else if (typeof(val) !== 'number') {
-    return;
-  }
   exec('echo '+servo+'='+val+' > /dev/servoblaster',
   function (error, stdout, stderr) {
     console.log("set servo: ", servo, " -> ", val);
@@ -68,7 +63,7 @@ app.get('/cmd', function(req, res, next) {
   }
   if (req.query.cmd === 'set servo') {
     console.log("Setting servo "+req.query.servo+" to val "+req.query.val);
-    setServo(ParseInt(req.query.servo), ParseInt(req.query.val));
+    setServo(req.query.servo, req.query.val);
     res.json({ res: 1 });
   } else if (req.query.cmd === 'get servo' && req.query.servo) {
     console.log("Returning servo "+req.query.servo+" val "+servoState[req.query.servo]);
