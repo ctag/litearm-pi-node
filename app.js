@@ -50,10 +50,10 @@ function moveServos()
   for (var i = 0; i < servoArray.length; i++) {
     var servo = servoArray[i];
     if (servoState[servo] < servoNext[servo]) {
-      servoNext[servo] -= 1;
+      servoNext[servo]--;
       servoState[servo] = servoNext[servo];
     } else if (servoState[i] > servoNext[servo]) {
-      servoNext[servo] += 1;
+      servoNext[servo]++;
       servoState[servo] = servoNext[servo];
     } else {
       equalCount++;
