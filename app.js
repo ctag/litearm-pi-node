@@ -69,6 +69,8 @@ function setServo(servo, val)
 {
   console.log("set servo: ", servo, " -> ", val);
   servoNext[servo] = val;
+  window.clearTimeout(moveServosTimeout);
+  moveServosTimeout = window.setTimeout(moveServos, timeoutDelay);
 }
 
 setServo(1, 150);
