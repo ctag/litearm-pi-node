@@ -61,7 +61,7 @@ function moveServos()
     exec('echo '+servo+'='+servoState[servo]+' > /dev/servoblaster');
   }
   if (equalCount != 3) {
-    moveServosTimeout = window.setTimeout(moveServos, timeoutDelay);
+    moveServosTimeout = setTimeout(moveServos, timeoutDelay);
   }
 }
 
@@ -69,8 +69,8 @@ function setServo(servo, val)
 {
   console.log("set servo: ", servo, " -> ", val);
   servoNext[servo] = val;
-  window.clearTimeout(moveServosTimeout);
-  moveServosTimeout = window.setTimeout(moveServos, timeoutDelay);
+  clearTimeout(moveServosTimeout);
+  moveServosTimeout = setTimeout(moveServos, timeoutDelay);
 }
 
 setServo(1, 150);
