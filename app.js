@@ -22,7 +22,11 @@ var fs = require('fs');
 
 var app = express();
 
-var servoState = [];
+var servoState = []; // current servo position
+var servoNext = []; // desired servo position
+var moveServosTimeout; // timeout id
+var timeoutDelay = 5; // timeout delay
+var timeoutStep = 1; // timeout servo movement step
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -39,13 +43,32 @@ app.use(express.static(path.join(__dirname, 'public')));
 //app.use('/', routes);
 //app.use('/users', users);
 
+function moveServos()
+{
+  var servoArray = [1,3,4];
+  var equalCount = 0;
+  for (var i = 0; i < servoArray.length; i++) {
+    var servo = servoArray[i];
+    if (servoState[servo] < servoNext[servo]) {
+      servoNext[servo] -= 1;
+      servoState[servo] = servoNext[servo];
+    } else if (servoState[i] > servoNext[servo]) {
+      servoNext[servo] += 1;
+      servoState[servo] = servoNext[servo];
+    } else {
+      equalCount++;
+    }
+    exec('echo '+servo+'='+servoState[servo]+' > /dev/servoblaster');
+  }
+  if (equalCount != 3) {
+    moveServosTimeout = window.setTimeout(moveServos, timeoutDelay);
+  }
+}
+
 function setServo(servo, val)
 {
-  exec('echo '+servo+'='+val+' > /dev/servoblaster',
-  function (error, stdout, stderr) {
-    console.log("set servo: ", servo, " -> ", val);
-    servoState[servo] = val;
-  });
+  console.log("set servo: ", servo, " -> ", val);
+  servoNext[servo] = val;
 }
 
 setServo(1, 150);
