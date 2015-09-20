@@ -1,13 +1,12 @@
 [Unit]
-Description=PiBits ServoBlaster Daemon
+Description=Shutdown on button press
 #After=graphical.target
 
 [Service]
-Type=forking
+Type=simple
 #EnvironmentFile=/etc/courtlistener
 #WorkingDirectory=/usr/local/solr/example
-#ExecStart=/usr/local/sbin/servod --idle-timeout=300000
-ExecStart=/usr/local/sbin/servod --p1pins=11,13,15 --idle-timeout=1500000
+ExecStart=/usr/local/sbin/gpio_halt.sh
 Restart=on-failure
 #LimitNOFILE=10000
 

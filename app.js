@@ -24,9 +24,10 @@ var app = express();
 
 var servoState = []; // current servo position
 var servoNext = []; // desired servo position
+var servoMap = ['P1-11','P1-13','P1-15'];
 var moveServosTimeout; // timeout id
-var timeoutDelay = 5; // timeout delay
-var timeoutStep = 1; // timeout servo movement step
+var timeoutDelay = 10; // timeout delay
+var moveStep = 2; // timeout servo movement step
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -45,20 +46,23 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 function moveServos()
 {
-  var servoArray = [1,3,4];
+  //console.log("moveServos");
   var equalCount = 0;
-  for (var i = 0; i < servoArray.length; i++) {
-    var servo = servoArray[i];
-    if (servoState[servo] < servoNext[servo]) {
-      servoNext[servo]--;
-      servoState[servo] = servoNext[servo];
-    } else if (servoState[i] > servoNext[servo]) {
-      servoNext[servo]++;
-      servoState[servo] = servoNext[servo];
+  for (var i = 0; i < servoMap.length; i++) {
+    var servo = servoMap[i];
+    if ((servoState[i]+moveStep) < servoNext[i]) {
+      servoState[i] = servoState[i] + moveStep;
+    } else if ((servoState[i]-moveStep) > servoNext[i]) {
+      servoState[i] = servoState[i] - moveStep;
+    } else if (servoState[i] < servoNext[i]) {
+      servoState[i]++;
+    } else if (servoState[i] > servoNext[i]) {
+      servoState[i]--;
     } else {
       equalCount++;
     }
-    exec('echo '+servo+'='+servoState[servo]+' > /dev/servoblaster');
+    console.log("Moving "+servo+" to "+servoState[i]);
+    exec('echo '+servo+'='+servoState[i]+' > /dev/servoblaster');
   }
   if (equalCount != 3) {
     moveServosTimeout = setTimeout(moveServos, timeoutDelay);
@@ -73,9 +77,12 @@ function setServo(servo, val)
   moveServosTimeout = setTimeout(moveServos, timeoutDelay);
 }
 
-setServo(1, 150);
-setServo(3, 150);
-setServo(4, 150);
+exec('echo P1-11='+150+' > /dev/servoblaster');
+exec('echo P1-13='+150+' > /dev/servoblaster');
+exec('echo P1-15='+150+' > /dev/servoblaster');
+servoState[0] = 150;
+servoState[1] = 150;
+servoState[2] = 150;
 
 app.get('/', function(req, res, next) {
   res.sendFile(path.join(__dirname, 'public/digits.html'));

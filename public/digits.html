@@ -49,7 +49,7 @@
     var elboCmd = "[sb" + degrees + "]";
     httpDo("/cmd", "GET", {
       "cmd": "set servo",
-      "servo": 1,
+      "servo": 0,
       "val": degrees
     }, "json");
   }
@@ -61,7 +61,7 @@
     var elboCmd = "[su" + degrees + "]";
     httpDo("/cmd", "GET", {
       "cmd": "set servo",
-      "servo": 4,
+      "servo": 1,
       "val": degrees
     }, "json");
   }
@@ -75,7 +75,7 @@
       var elboCmd = "[se" + degrees + "]";
       httpDo("/cmd", "GET", {
         "cmd": "set servo",
-        "servo": 3,
+        "servo": 2,
         "val": degrees
       }, "json");
     }
@@ -85,19 +85,19 @@
     console.log("Updating all controls.");
     httpDo("/cmd", "GET", {
       "cmd": "get servo",
-      "servo": 1
+      "servo": 0
     }, "json",
     function (result) {
       updateBase(result.res);
       httpDo("/cmd", "GET", {
         "cmd": "get servo",
-        "servo": 4
+        "servo": 1
       }, "json",
       function (result) {
         updateShdr(result.res);
         httpDo("/cmd", "GET", {
           "cmd": "get servo",
-          "servo": 3
+          "servo": 2
         }, "json",
         function (result) {
           updateElbo(result.res);
@@ -109,19 +109,19 @@
   function doResetAll() {
     httpDo("/cmd", "GET", {
       "cmd": "set servo",
-      "servo": 1,
+      "servo": 0,
       "val": 150
     }, 'json',
     function (result) {
       httpDo("/cmd", "GET", {
         "cmd": "set servo",
-        "servo": 3,
+        "servo": 1,
         "val": 150
       }, 'json',
       function (result) {
         httpDo("/cmd", "GET", {
           "cmd": "set servo",
-          "servo": 4,
+          "servo": 2,
           "val": 150
         }, 'json',
         function (result) {
@@ -161,9 +161,9 @@ width: 100%; height: 100%;">
   width: 80%; height: 90%; border: 1px solid red;
   z-index: 10; position: absolute; top: 5%; left: 10%;">
 
-    <div id="updateControl" class="controlItem">Click to update all</div>
+    <div id="updateControl" class="controlButton">Click to update all</div>
 
-    <div id="resetControl" class="controlItem">Click to reset all</div>
+    <div id="resetControl" class="controlButton">Click to reset all</div>
 
     <div id="baseControl" class="controlItem">
       BASE Control:
